@@ -14,6 +14,8 @@
 |---|---|
 | [機能設計書](docs/functional-design.md) | 研究目的・仮説・分析対象・キーワード定義・分析手法 |
 | [技術仕様書](docs/architecture.md) | システム構成・CLIコマンド・DB設計・API連携仕様 |
+| [リポジトリ構造定義書](docs/repository-structure.md) | ディレクトリ構成・コミット対象・機密情報の管理方針 |
+| [開発ガイドライン](docs/development-guidelines.md) | コーディング規約・テスト方針・ブランチ運用・セキュリティ |
 
 ---
 
@@ -24,7 +26,7 @@
 - **テスト**: JUnit 5
 - **DB**: SQLite
 - **統計**: Apache Commons Math
-- **データソース**: [EDINET API v2](https://disclosure.edinet-fsa.go.jp/api/v2/)
+- **データソース**: [EDINET API v2](https://disclosure2dl.edinet-fsa.go.jp/guide/static/disclosure/WZEK0110.html)
 
 ---
 
