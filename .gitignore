@@ -13,6 +13,7 @@ application-local.*
 data/raw/
 data/*.db
 data/*.sqlite
+data/xbrl.db-journal
 
 # ==============================
 # 分析出力ファイル

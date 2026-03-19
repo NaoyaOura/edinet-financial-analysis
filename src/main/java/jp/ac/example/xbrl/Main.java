@@ -2,6 +2,8 @@ package jp.ac.example.xbrl;
 
 import jp.ac.example.xbrl.command.DownloadCommand;
 import jp.ac.example.xbrl.command.FetchListCommand;
+import jp.ac.example.xbrl.command.ParseXbrlCommand;
+import jp.ac.example.xbrl.command.ScoreKeywordsCommand;
 import jp.ac.example.xbrl.command.StatusCommand;
 import jp.ac.example.xbrl.config.AppConfig;
 import jp.ac.example.xbrl.db.DatabaseManager;
@@ -39,8 +41,8 @@ public class Main {
             case "status" -> new StatusCommand(dbManager).execute();
             case "fetch-list" -> new FetchListCommand(config, dbManager).execute(subArgs);
             case "download" -> new DownloadCommand(config, dbManager).execute(subArgs);
-            case "parse-xbrl" -> System.out.println("parse-xbrl: 未実装です。");
-            case "score-keywords" -> System.out.println("score-keywords: 未実装です。");
+            case "parse-xbrl" -> new ParseXbrlCommand(config, dbManager).execute(subArgs);
+            case "score-keywords" -> new ScoreKeywordsCommand(config, dbManager).execute(subArgs);
             case "analyze" -> System.out.println("analyze: 未実装です。");
             case "export" -> System.out.println("export: 未実装です。");
             default -> {

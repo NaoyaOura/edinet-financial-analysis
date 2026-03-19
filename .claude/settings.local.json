@@ -18,7 +18,10 @@
       "Bash(export JAVA_HOME=\"C:/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA/jbr\")",
       "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
       "Bash(MVN=\"C:/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA/plugins/maven/lib/maven3/bin/mvn\")",
-      "Bash(\"$MVN\" test:*)"
+      "Bash(\"$MVN\" test:*)",
+      "Bash(\"C:/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA Community Edition/plugins/maven/lib/maven3/bin/mvn\" -q compile -Djava.home=\"C:/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA Community Edition/jbr\")",
+      "Bash(JAVA_HOME=\"/c/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA/jbr\" \"/c/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA/plugins/maven/lib/maven3/bin/mvn\" -q compile)",
+      "Bash(JAVA_HOME=\"/c/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA/jbr\" \"/c/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA/plugins/maven/lib/maven3/bin/mvn\" test)"
     ]
   }
 }

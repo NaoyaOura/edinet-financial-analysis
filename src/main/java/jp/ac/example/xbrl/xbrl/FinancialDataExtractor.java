@@ -1,0 +1,80 @@
+package jp.ac.example.xbrl.xbrl;
+
+import jp.ac.example.xbrl.db.FinancialDataDao.FinancialRecord;
+
+import java.io.File;
+import java.util.Map;
+
+/**
+ * XBRLパース結果（要素名→値マップ）から FinancialRecord を生成するクラス。
+ * architecture.md の財務指標対応表に従ってタクソノミ要素名をマッピングする。
+ */
+public class FinancialDataExtractor {
+
+    private final XbrlParser parser;
+
+    public FinancialDataExtractor(XbrlParser parser) {
+        this.parser = parser;
+    }
+
+    /**
+     * 展開済み書類ディレクトリから財務指標を抽出して FinancialRecord を返す。
+     *
+     * @param docDir     data/raw/{docId}/ ディレクトリ
+     * @param edinetCode EDINETコード
+     * @param fiscalYear 決算年度
+     * @return 抽出した FinancialRecord（XBRLが見つからない場合は null）
+     */
+    public FinancialRecord extract(File docDir, String edinetCode, int fiscalYear) throws Exception {
+        File xbrlFile = parser.findXbrlFile(docDir);
+        if (xbrlFile == null) return null;
+
+        Map<String, Double> values = parser.parse(xbrlFile);
+
+        return new FinancialRecord(
+            edinetCode,
+            fiscalYear,
+            get(values, "NetSales"),
+            get(values, "GrossProfit"),
+            get(values, "OperatingIncome", "OperatingProfit"),
+            get(values, "OrdinaryIncome", "OrdinaryProfit"),
+            get(values, "ProfitLoss", "NetIncome", "ProfitLossAttributableToOwnersOfParent"),
+            get(values, "Assets"),
+            get(values, "CurrentAssets"),
+            get(values, "CurrentLiabilities"),
+            get(values, "Liabilities"),
+            get(values, "Equity", "NetAssets"),
+            get(values, "CashAndDeposits", "CashAndCashEquivalents"),
+            get(values, "Inventories"),
+            get(values, "SellingGeneralAdministrativeExpenses"),
+            get(values, "PersonnelExpenses", "WagesAndSalaries"),
+            getInt(values, "NumberOfEmployees"),
+            get(values, "ResearchAndDevelopmentExpenses"),
+            get(values, "Software"),
+            get(values, "IntangibleAssets"),
+            get(values, "PurchaseOfPropertyPlantAndEquipmentAndIntangibleAssets",
+                        "PurchaseOfPropertyPlantAndEquipment"),
+            get(values, "CashFlowsFromOperatingActivities", "NetCashProvidedByUsedInOperatingActivities"),
+            get(values, "CashFlowsFromInvestingActivities", "NetCashProvidedByUsedInInvestingActivities")
+        );
+    }
+
+    /**
+     * 複数の候補キーから最初に見つかった値を返す。見つからない場合は null。
+     */
+    private Double get(Map<String, Double> values, String... keys) {
+        for (String key : keys) {
+            Double v = values.get(key);
+            if (v != null) return v;
+        }
+        return null;
+    }
+
+    /**
+     * 複数の候補キーから最初に見つかった値をIntegerで返す。見つからない場合は null。
+     */
+    private Integer getInt(Map<String, Double> values, String... keys) {
+        Double v = get(values, keys);
+        return v != null ? v.intValue() : null;
+    }
+}
