@@ -55,15 +55,42 @@ mvn exec:java -Dexec.args="download --year 2023"
 # 財務データのパース（未処理分のみ）
 mvn exec:java -Dexec.args="parse-xbrl --year 2023"
 
-# キーワードスコア算出（小売業のみ再実行）
-mvn exec:java -Dexec.args="score-keywords --year 2023 --industry RETAIL"
+# キーワードスコア算出（未処理分のみ）
+mvn exec:java -Dexec.args="score-keywords --year 2023"
 
-# 分析実行
+# 特定企業のキーワードスコアを強制再算出
+mvn exec:java -Dexec.args="score-keywords --year 2023 --edinet-code E12345 --force"
+
+# 分析実行（全手法）
+mvn exec:java -Dexec.args="analyze"
+
+# ラグ回帰分析のみ
 mvn exec:java -Dexec.args="analyze --type lag-regression"
+
+# CSV出力（全種類）
+mvn exec:java -Dexec.args="export"
+
+# 統合CSV（分析用メインデータ）のみ
+mvn exec:java -Dexec.args="export --type merged --year 2023 --output ./results"
 
 # 進捗確認
 mvn exec:java -Dexec.args="status"
 ```
+
+### analyze オプション
+
+| オプション | 値 | 説明 |
+|---|---|---|
+| `--type` | `group-comparison` / `lag-regression` / `did` / `panel` / `all`（デフォルト） | 実行する分析種別 |
+| `--year` | 年度（例: `2023`） | グループ比較・DiD のみ特定年度を指定可能。ラグ回帰・パネルは全年度データを使用 |
+
+### export オプション
+
+| オプション | 値 | 説明 |
+|---|---|---|
+| `--type` | `financial` / `keywords` / `merged` / `all`（デフォルト） | 出力するCSVの種別 |
+| `--year` | 年度（例: `2023`） | 指定なしの場合は全年度を出力 |
+| `--output` | ディレクトリパス（デフォルト: `./output`） | 出力先ディレクトリ |
 
 ---
 
@@ -87,7 +114,12 @@ mvn exec:java -Dexec.args="status"
 
 PRIMARY KEY: `(docId, task)`
 
-### 4-3. 各タスクの再実行ルール
+### 4-3. `fetch-list` の業種分類とPENDING登録
+
+`fetch-list` 実行時は、APIレスポンスの `industryCode`（東証33業種コード）を `IndustryClassifier` で `RETAIL` / `IT` / `UNKNOWN` に変換し、`companies` テーブルに upsert する。
+同時に、各書類の `DOWNLOAD` タスクを `task_progress` テーブルに `PENDING` ステータスで登録する（`INSERT OR IGNORE` で既存レコードを上書きしない）。
+
+### 4-4. 各タスクの再実行ルール
 
 | タスク | 再実行の条件 | 部分更新の単位 |
 |---|---|---|
@@ -96,7 +128,7 @@ PRIMARY KEY: `(docId, task)`
 | `score-keywords` | `status != 'DONE'` の書類のみスコア算出 | 書類1件（docId）単位 |
 | `analyze` | 常に全データで再計算（結果は上書き） | 分析種別単位 |
 
-### 4-4. `--force` オプション
+### 4-5. `--force` オプション
 
 ```bash
 # 特定企業の財務パース結果を強制的に再処理
@@ -125,7 +157,8 @@ src/main/java/jp/ac/example/xbrl/
 │   └── AppConfig.java               # 環境変数・設定値の読み込み（EDINET_API_KEY等）
 ├── edinet/
 │   ├── EdinetApiClient.java         # EDINET API HTTP通信
-│   ├── DocumentListFetcher.java     # 書類一覧取得（日付・業種フィルタ）
+│   ├── DocumentListFetcher.java     # 書類一覧取得（日付ループ・PENDING登録）
+│   ├── IndustryClassifier.java      # 東証33業種コード → RETAIL/IT/UNKNOWN 変換
 │   └── DocumentDownloader.java     # ZIPダウンロード・展開
 ├── xbrl/
 │   ├── XbrlParser.java              # XBRLファイルのパース
@@ -141,10 +174,12 @@ src/main/java/jp/ac/example/xbrl/
 │   ├── KeywordScoreDao.java         # キーワードスコアデータのCRUD
 │   └── TaskProgressDao.java         # 進捗管理テーブルのCRUD
 ├── analysis/
+│   ├── MergedRecord.java            # financial_data + keyword_scores + companies の統合レコード（record型）
+│   ├── AnalysisDataLoader.java      # DB から MergedRecord のリストを取得
 │   ├── GroupComparator.java         # グループ比較（t検定・ANOVA）
-│   ├── LagRegressionAnalyzer.java   # ラグ回帰分析
+│   ├── LagRegressionAnalyzer.java   # ラグ回帰分析（OLS）
 │   ├── DifferenceInDifferences.java # 差分の差分法（DiD）
-│   └── PanelDataAnalyzer.java       # パネルデータ分析（固定効果モデル）
+│   └── PanelDataAnalyzer.java       # パネルデータ分析（固定効果モデル・within推定量）
 └── report/
     ├── CsvExporter.java             # CSV出力
     └── TextReporter.java            # テキストレポート出力
@@ -193,8 +228,8 @@ src/main/java/jp/ac/example/xbrl/
 |---|---|---|
 | `edinetCode` | TEXT PRIMARY KEY | EDINETコード |
 | `companyName` | TEXT | 企業名 |
-| `industryCode` | TEXT | 日本標準産業分類コード |
-| `industryCategory` | TEXT | 業種区分（`RETAIL` / `IT`） |
+| `industryCode` | TEXT | 東証33業種コード（小売業=`6100`、情報・通信業=`5250`。参考: [J-Quants](https://jpx-jquants.com/ja/spec/eq-master/sector33code)） |
+| `industryCategory` | TEXT | 業種区分（`RETAIL` / `IT` / `UNKNOWN`） |
 
 #### `document_list`（書類一覧）
 
@@ -321,7 +356,21 @@ if (apiKey == null || apiKey.isBlank()) {
 
 ---
 
-## 11. 環境変数一覧
+## 11. 業種分類
+
+`fetch-list` 実行時に EDINET API の `industryCode`（東証33業種コード）を取得し、`IndustryClassifier` クラスで以下のカテゴリに変換する。
+
+| 東証33業種コード | 業種名 | 本ツールでの分類 |
+|---|---|---|
+| `6100` | 小売業 | `RETAIL` |
+| `5250` | 情報・通信業 | `IT` |
+| その他 | — | `UNKNOWN`（分析対象外） |
+
+> 東証33業種コードの一覧: [J-Quants API ドキュメント](https://jpx-jquants.com/ja/spec/eq-master/sector33code)
+
+---
+
+## 12. 環境変数一覧
 
 | 変数名 | 必須 | 説明 |
 |---|---|---|

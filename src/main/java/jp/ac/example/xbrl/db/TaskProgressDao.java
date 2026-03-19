@@ -47,6 +47,24 @@ public class TaskProgressDao {
     }
 
     /**
+     * 進捗レコードが存在しない場合のみ登録する（既存レコードは変更しない）。
+     * fetch-list の再実行時に DONE 済みのタスクを上書きしないために使用する。
+     */
+    public void insertIfAbsent(String docId, String task, Status initialStatus) throws SQLException {
+        String sql = """
+            INSERT OR IGNORE INTO task_progress (docId, task, status, errorMessage, updatedAt)
+            VALUES (?, ?, ?, NULL, ?)
+        """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, docId);
+            ps.setString(2, task);
+            ps.setString(3, initialStatus.name());
+            ps.setString(4, Instant.now().toString());
+            ps.executeUpdate();
+        }
+    }
+
+    /**
      * 指定タスクで未完了（DONE以外）の書類IDリストを返す。
      * --forceが指定された場合はすべての書類IDを返す。
      */

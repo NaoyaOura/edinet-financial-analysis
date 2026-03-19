@@ -106,19 +106,21 @@ public class DocumentListFetcher {
                 String edinetCode = doc.path("edinetCode").asText();
                 String filerName = doc.path("filerName").asText();
                 String docDescription = doc.path("docDescription").asText();
+                String industryCode = doc.path("industryCode").asText("");
 
                 if (docId.isBlank() || edinetCode.isBlank()) {
                     continue;
                 }
 
-                // 企業マスタに登録（業種は後続フェーズで更新するため UNKNOWN として登録）
-                companyDao.upsert(edinetCode, filerName, null, "UNKNOWN");
+                // 業種コードを RETAIL / IT / UNKNOWN に分類して企業マスタに登録
+                String industryCategory = IndustryClassifier.classify(industryCode);
+                companyDao.upsert(edinetCode, filerName, industryCode, industryCategory);
 
                 // 書類一覧に登録（重複はスキップ）
                 documentListDao.insertIfAbsent(docId, edinetCode, fiscalYear, date, docDescription);
 
-                // ダウンロードタスクを PENDING で登録
-                taskProgressDao.upsert(docId, "DOWNLOAD", TaskProgressDao.Status.PENDING, null);
+                // ダウンロードタスクを PENDING で登録（既存レコードは上書きしない）
+                taskProgressDao.insertIfAbsent(docId, "DOWNLOAD", TaskProgressDao.Status.PENDING);
 
                 savedCount++;
             }

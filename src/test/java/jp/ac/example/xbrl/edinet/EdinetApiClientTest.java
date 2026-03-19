@@ -25,6 +25,7 @@ class EdinetApiClientTest {
                   "edinetCode": "E12345",
                   "filerName": "テスト小売株式会社",
                   "docTypeCode": "120",
+                  "industryCode": "6100",
                   "docDescription": "有価証券報告書"
                 },
                 {
@@ -32,6 +33,7 @@ class EdinetApiClientTest {
                   "edinetCode": "E67890",
                   "filerName": "サンプルIT株式会社",
                   "docTypeCode": "120",
+                  "industryCode": "5250",
                   "docDescription": "有価証券報告書"
                 }
               ]
@@ -46,6 +48,8 @@ class EdinetApiClientTest {
         assertEquals("S100XXXX", results.get(0).path("docID").asText());
         assertEquals("E12345", results.get(0).path("edinetCode").asText());
         assertEquals("120", results.get(0).path("docTypeCode").asText());
+        assertEquals("6100", results.get(0).path("industryCode").asText());
+        assertEquals("5250", results.get(1).path("industryCode").asText());
     }
 
     @Test

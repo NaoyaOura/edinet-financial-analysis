@@ -59,7 +59,7 @@ mvn compile
 各処理フェーズは独立したコマンドとして実行できます。
 
 ```bash
-# 1. 書類一覧を取得
+# 1. 書類一覧を取得（業種コードに基づき RETAIL / IT / UNKNOWN を自動分類）
 mvn exec:java -Dexec.args="fetch-list --year 2023"
 
 # 2. 書類をダウンロード（未取得分のみ）
@@ -71,10 +71,10 @@ mvn exec:java -Dexec.args="parse-xbrl --year 2023"
 # 4. キーワードスコアを算出
 mvn exec:java -Dexec.args="score-keywords --year 2023"
 
-# 5. 統計分析を実行
-mvn exec:java -Dexec.args="analyze --type lag-regression"
+# 5. 統計分析を実行（デフォルトは全分析）
+mvn exec:java -Dexec.args="analyze"
 
-# 6. CSV出力
+# 6. CSV出力（デフォルトは全種類）
 mvn exec:java -Dexec.args="export"
 
 # 進捗確認
@@ -83,6 +83,45 @@ mvn exec:java -Dexec.args="status"
 
 途中で失敗した場合は同じコマンドを再実行すると、完了済みの書類をスキップして続きから処理します。
 強制的に再処理する場合は `--force` オプションを追加してください。
+
+### analyze オプション
+
+```bash
+# 分析種別を指定（デフォルト: all）
+mvn exec:java -Dexec.args="analyze --type group-comparison"  # グループ比較
+mvn exec:java -Dexec.args="analyze --type lag-regression"    # ラグ回帰分析（メイン）
+mvn exec:java -Dexec.args="analyze --type did"               # 差分の差分法
+mvn exec:java -Dexec.args="analyze --type panel"             # 固定効果モデル
+
+# 特定年度のみで分析
+mvn exec:java -Dexec.args="analyze --type group-comparison --year 2023"
+```
+
+### export オプション
+
+```bash
+# 出力種別を指定（デフォルト: all）
+mvn exec:java -Dexec.args="export --type financial"  # 財務指標CSVのみ
+mvn exec:java -Dexec.args="export --type keywords"   # キーワードスコアCSVのみ
+mvn exec:java -Dexec.args="export --type merged"     # 統合CSV（分析用メインデータ）
+
+# 年度・出力先を指定
+mvn exec:java -Dexec.args="export --type merged --year 2023 --output ./results"
+```
+
+---
+
+## 業種分類
+
+`fetch-list` 実行時に EDINET API の `industryCode`（東証33業種コード）を取得し、以下のルールで自動分類します。
+
+| 東証33業種コード | 業種名 | 本ツールでの分類 |
+|---|---|---|
+| `6100` | 小売業 | `RETAIL` |
+| `5250` | 情報・通信業 | `IT` |
+| その他 | — | `UNKNOWN`（分析対象外） |
+
+> 東証33業種コードの一覧: [J-Quants API ドキュメント](https://jpx-jquants.com/ja/spec/eq-master/sector33code)
 
 ---
 
