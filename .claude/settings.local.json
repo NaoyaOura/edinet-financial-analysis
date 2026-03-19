@@ -22,7 +22,15 @@
       "Bash(\"C:/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA Community Edition/plugins/maven/lib/maven3/bin/mvn\" -q compile -Djava.home=\"C:/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA Community Edition/jbr\")",
       "Bash(JAVA_HOME=\"/c/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA/jbr\" \"/c/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA/plugins/maven/lib/maven3/bin/mvn\" -q compile)",
       "Bash(JAVA_HOME=\"/c/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA/jbr\" \"/c/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA/plugins/maven/lib/maven3/bin/mvn\" test)",
-      "WebFetch(domain:jpx-jquants.com)"
+      "WebFetch(domain:jpx-jquants.com)",
+      "Bash(mvn test:*)",
+      "Bash(cmd /c \"where mvn\")",
+      "Bash(cmd /c \"dir C:\\\\ProgramData\\\\chocolatey\\\\bin\\\\mvn* 2>&1\")",
+      "Bash(cmd /c \"dir \"\"C:\\\\Program Files\\\\Maven\"\" 2>&1\")",
+      "Bash(cmd /c \"mvn --version\" 2>&1)",
+      "Bash(cmd /c \"set PATH && echo --- && mvn --version\")",
+      "Bash(\"/c/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA/plugins/maven/lib/maven3/bin/mvn\" test)",
+      "Bash(JAVA_HOME=\"/c/Users/大浦直也-NaoyaOura/.jdks/ms-17.0.18\" \"/c/Users/大浦直也-NaoyaOura/AppData/Local/Programs/IntelliJ IDEA/plugins/maven/lib/maven3/bin/mvn\" test)"
     ]
   }
 }

@@ -69,6 +69,73 @@ class EdinetApiClientTest {
     }
 
     @Test
+    void 企業情報APIレスポンスのresults配列が正しくパースできること() throws Exception {
+        String json = """
+            {
+              "metadata": { "title": "EDINET提出者一覧API", "status": "200" },
+              "results": [
+                {
+                  "edinetCode": "E12345",
+                  "secCode": "1234",
+                  "filerName": "テスト小売株式会社",
+                  "industryCode": "6100"
+                },
+                {
+                  "edinetCode": "E67890",
+                  "secCode": "5678",
+                  "filerName": "サンプルIT株式会社",
+                  "industryCode": "5250"
+                },
+                {
+                  "edinetCode": "E99999",
+                  "secCode": "9999",
+                  "filerName": "その他業種株式会社",
+                  "industryCode": "3050"
+                }
+              ]
+            }
+            """;
+
+        JsonNode root = objectMapper.readTree(json);
+        JsonNode results = root.path("results");
+
+        assertTrue(results.isArray());
+        assertEquals(3, results.size());
+        assertEquals("E12345", results.get(0).path("edinetCode").asText());
+        assertEquals("6100",   results.get(0).path("industryCode").asText());
+        assertEquals("5250",   results.get(1).path("industryCode").asText());
+        assertEquals("3050",   results.get(2).path("industryCode").asText());
+    }
+
+    @Test
+    void 企業情報APIからedinetCodeとindustryCodeのマップが構築できること() throws Exception {
+        String json = """
+            {
+              "results": [
+                { "edinetCode": "E12345", "industryCode": "6100" },
+                { "edinetCode": "E67890", "industryCode": "5250" },
+                { "edinetCode": "E99999", "industryCode": "3050" }
+              ]
+            }
+            """;
+
+        JsonNode root = objectMapper.readTree(json);
+        java.util.Map<String, String> map = new java.util.HashMap<>();
+        for (JsonNode company : root.path("results")) {
+            String edinetCode  = company.path("edinetCode").asText("");
+            String industryCode = company.path("industryCode").asText("");
+            if (!edinetCode.isBlank()) {
+                map.put(edinetCode, industryCode);
+            }
+        }
+
+        assertEquals("6100", map.get("E12345"));
+        assertEquals("5250", map.get("E67890"));
+        assertEquals("3050", map.get("E99999"));
+        assertNull(map.get("E00000")); // 存在しないキーはnull
+    }
+
+    @Test
     void docTypeCode120以外のレコードを識別できること() throws Exception {
         String json = """
             {

@@ -44,6 +44,18 @@ public class EdinetApiClient {
     }
 
     /**
+     * 全上場企業の企業情報一覧を取得する。
+     * レスポンスの results 配列に edinetCode・industryCode 等が含まれる。
+     *
+     * @return レスポンスのルートJsonNode
+     */
+    public JsonNode fetchCompanyList() throws IOException, InterruptedException {
+        String url = String.format("%s/companies.json?type=3&Subscription-Key=%s",
+            BASE_URL, apiKey);
+        return getWithRetry(url);
+    }
+
+    /**
      * 指定書類IDのZIPファイルをバイト配列で取得する。
      * @param docId EDINET書類ID
      * @return ZIPファイルのバイト配列
