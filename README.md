@@ -16,6 +16,7 @@
 | [技術仕様書](docs/architecture.md) | システム構成・CLIコマンド・DB設計・API連携仕様 |
 | [リポジトリ構造定義書](docs/repository-structure.md) | ディレクトリ構成・コミット対象・機密情報の管理方針 |
 | [開発ガイドライン](docs/development-guidelines.md) | コーディング規約・テスト方針・ブランチ運用・セキュリティ |
+| [タスク進捗管理](docs/task-progress.md) | task_progress テーブルのステータス遷移・再実行の挙動 |
 
 ---
 
