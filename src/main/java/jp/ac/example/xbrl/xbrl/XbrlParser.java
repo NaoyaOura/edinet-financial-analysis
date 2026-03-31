@@ -73,21 +73,14 @@ public class XbrlParser {
     }
 
     /**
-     * テキスト値と decimals 属性から円換算済みのDouble値を返す。
-     * decimals="-3" は千円単位、decimals="-6" は百万円単位を意味する。
+     * テキスト値からDouble値を返す。
+     * EDINET XBRLでは unitRef="JPY" の値はすでに円単位で格納されており、
+     * decimals属性はXBRL標準仕様における精度指標（有効桁数）であって
+     * スケーリング係数ではない。そのため decimals による変換は行わない。
      */
     Double parseValue(String text, String decimals) {
         try {
-            double value = Double.parseDouble(text);
-
-            if (decimals != null && !decimals.isEmpty() && !decimals.equals("INF")) {
-                int dec = Integer.parseInt(decimals);
-                if (dec < 0) {
-                    // 例: decimals="-3" → 値×1000（千円→円）
-                    value = value * Math.pow(10, -dec);
-                }
-            }
-            return value;
+            return Double.parseDouble(text);
         } catch (NumberFormatException e) {
             return null;
         }

@@ -41,11 +41,14 @@ class XbrlParserTest {
     }
 
     @Test
-    void 千円単位の値が円に正規化されること() throws Exception {
+    void decimalsがマイナスでも値がそのまま返されること() throws Exception {
+        // EDINET XBRLでは unitRef="JPY" の値はすでに円単位。
+        // decimals="-3" は精度指標（千円単位で有効）であり、スケーリング係数ではない。
+        // 実データ例: decimals="-3" で値 22514514000（円）
         File xbrl = createXbrl("""
             <xbrl xmlns:jppfs_cor="http://xbrl.ifrs.org/taxonomy/2014-03-05/jppfs_cor">
               <jppfs_cor:NetSales contextRef="CurrentYearConsolidatedDuration"
-                  unitRef="JPY" decimals="-3">500000</jppfs_cor:NetSales>
+                  unitRef="JPY" decimals="-3">500000000</jppfs_cor:NetSales>
             </xbrl>
             """);
 
@@ -54,11 +57,12 @@ class XbrlParserTest {
     }
 
     @Test
-    void 百万円単位の値が円に正規化されること() throws Exception {
+    void decimalsがマイナス6でも値がそのまま返されること() throws Exception {
+        // decimals="-6" は百万円単位での精度指標。値自体は円換算済み。
         File xbrl = createXbrl("""
             <xbrl xmlns:jppfs_cor="http://xbrl.ifrs.org/taxonomy/2014-03-05/jppfs_cor">
               <jppfs_cor:OperatingIncome contextRef="CurrentYearConsolidatedDuration"
-                  unitRef="JPY" decimals="-6">50000</jppfs_cor:OperatingIncome>
+                  unitRef="JPY" decimals="-6">50000000000</jppfs_cor:OperatingIncome>
             </xbrl>
             """);
 

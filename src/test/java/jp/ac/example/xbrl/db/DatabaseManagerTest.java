@@ -55,7 +55,7 @@ class DatabaseManagerTest {
     void CompanyDaoでINSERTとSELECTができること() throws SQLException {
         try (Connection conn = dbManager.getConnection()) {
             CompanyDao dao = new CompanyDao(conn);
-            dao.upsert("E12345", "テスト小売株式会社", "5711", "RETAIL");
+            dao.upsert("E12345", "テスト小売株式会社");
 
             String name = dao.findCompanyName("E12345");
             assertEquals("テスト小売株式会社", name);
@@ -66,8 +66,8 @@ class DatabaseManagerTest {
     void CompanyDaoで同一EDINETコードをUPSERTできること() throws SQLException {
         try (Connection conn = dbManager.getConnection()) {
             CompanyDao dao = new CompanyDao(conn);
-            dao.upsert("E12345", "旧社名", "5711", "RETAIL");
-            dao.upsert("E12345", "新社名", "5711", "RETAIL");
+            dao.upsert("E12345", "旧社名");
+            dao.upsert("E12345", "新社名");
 
             assertEquals("新社名", dao.findCompanyName("E12345"));
         }
