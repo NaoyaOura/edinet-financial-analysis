@@ -1,4 +1,4 @@
-# edinet-financial-test-analysis
+# edinet-financial-analysis
 
 有価証券報告書における生成AI・DX関連キーワードの出現頻度と、日本企業の財務パフォーマンスとの関係を定量的に分析するCLIアプリケーション。
 
