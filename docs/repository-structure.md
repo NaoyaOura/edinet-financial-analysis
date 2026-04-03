@@ -10,11 +10,14 @@ edinet-financial-test-analysis/
 ├── pom.xml                          # Maven設定・依存関係定義
 │
 ├── docs/                            # 永続的ドキュメント（設計・仕様）
-│   ├── functional-design.md         # 機能設計書
-│   ├── architecture.md              # 技術仕様書
-│   ├── repository-structure.md      # 本ファイル
-│   ├── development-guidelines.md    # 開発ガイドライン
-│   └── ideas/                       # ブレインストーミング・調査メモ
+│   ├── functional-design.md             # 機能設計書
+│   ├── jquants-functional-design.md     # J-Quants 機能設計書
+│   ├── architecture.md                  # 技術仕様書
+│   ├── repository-structure.md          # 本ファイル
+│   ├── jquants-repository-structure.md  # J-Quants リポジトリ構造定義書
+│   ├── development-guidelines.md        # 開発ガイドライン
+│   ├── command-reference.md             # コマンドリファレンス
+│   └── ideas/                           # ブレインストーミング・調査メモ
 │       └── brainstorm-YYYYMMDD.md
 │
 ├── .steering/                       # 作業単位のドキュメント（タスク管理）

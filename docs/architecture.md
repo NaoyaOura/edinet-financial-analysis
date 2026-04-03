@@ -377,6 +377,7 @@ if (apiKey == null || apiKey.isBlank()) {
 | 変数名 | 必須 | 説明 |
 |---|---|---|
 | `EDINET_API_KEY` | 必須 | EDINET APIキー |
+| `JQUANTS_REFRESH_TOKEN` | 必須 | J-Quants リフレッシュトークン（Standard プラン） |
 | `DB_PATH` | 任意 | SQLiteファイルパス（デフォルト: `./data/xbrl.db`） |
 | `RAW_DATA_DIR` | 任意 | ダウンロードZIP展開先ディレクトリ（デフォルト: `./data/raw`） |
 | `OUTPUT_DIR` | 任意 | CSV・レポートの出力先ディレクトリ（デフォルト: `./output`） |

@@ -4,6 +4,9 @@ import jp.ac.example.xbrl.command.AnalyzeCommand;
 import jp.ac.example.xbrl.command.DownloadCommand;
 import jp.ac.example.xbrl.command.ExportCommand;
 import jp.ac.example.xbrl.command.FetchListCommand;
+import jp.ac.example.xbrl.command.JQuantsFetchFinsCommand;
+import jp.ac.example.xbrl.command.JQuantsFetchInfoCommand;
+import jp.ac.example.xbrl.command.JQuantsFetchPricesCommand;
 import jp.ac.example.xbrl.command.ParseXbrlCommand;
 import jp.ac.example.xbrl.command.ScoreKeywordsCommand;
 import jp.ac.example.xbrl.command.StatusCommand;
@@ -47,6 +50,30 @@ public class Main {
             case "score-keywords" -> new ScoreKeywordsCommand(config, dbManager).execute(subArgs);
             case "analyze" -> new AnalyzeCommand(config, dbManager).execute(subArgs);
             case "export" -> new ExportCommand(config, dbManager).execute(subArgs);
+            case "jquants-fetch-info" -> {
+                try {
+                    new JQuantsFetchInfoCommand(config, dbManager).execute(subArgs);
+                } catch (Exception e) {
+                    System.err.println("jquants-fetch-info に失敗しました: " + e.getMessage());
+                    System.exit(1);
+                }
+            }
+            case "jquants-fetch-prices" -> {
+                try {
+                    new JQuantsFetchPricesCommand(config, dbManager).execute(subArgs);
+                } catch (Exception e) {
+                    System.err.println("jquants-fetch-prices に失敗しました: " + e.getMessage());
+                    System.exit(1);
+                }
+            }
+            case "jquants-fetch-fins" -> {
+                try {
+                    new JQuantsFetchFinsCommand(config, dbManager).execute(subArgs);
+                } catch (Exception e) {
+                    System.err.println("jquants-fetch-fins に失敗しました: " + e.getMessage());
+                    System.exit(1);
+                }
+            }
             default -> {
                 System.err.println("不明なコマンド: " + command);
                 printHelp();
@@ -60,13 +87,16 @@ public class Main {
             使い方: mvn exec:java -Dexec.args="<コマンド> [オプション]"
 
             利用可能なコマンド:
-              fetch-list      EDINET書類一覧を取得してDBに保存
-              download        書類ZIPをダウンロード・展開
-              parse-xbrl      XBRLをパースして財務指標をDBに保存
-              score-keywords  テキストからキーワードスコアを算出してDBに保存
-              analyze         統計分析を実行してレポートを出力
-              export          SQLiteのデータをCSV出力
-              status          各フェーズの進捗状況を表示
+              fetch-list            EDINET書類一覧を取得してDBに保存
+              download              書類ZIPをダウンロード・展開
+              parse-xbrl            XBRLをパースして財務指標をDBに保存
+              score-keywords        テキストからキーワードスコアを算出してDBに保存
+              analyze               統計分析を実行してレポートを出力
+              export                SQLiteのデータをCSV出力
+              status                各フェーズの進捗状況を表示
+              jquants-fetch-info    J-Quants上場銘柄情報を取得・EDINETとのマッピングを生成
+              jquants-fetch-prices  J-Quants日次株価を取得してDBに保存
+              jquants-fetch-fins    J-Quants財務情報を取得してDBに保存
             """);
     }
 }

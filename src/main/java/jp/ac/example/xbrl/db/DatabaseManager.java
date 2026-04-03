@@ -119,6 +119,75 @@ public class DatabaseManager {
                     PRIMARY KEY (docId, task)
                 )
             """);
+
+            // J-Quants: 上場銘柄情報
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS jquants_listed_info (
+                    code              TEXT PRIMARY KEY,
+                    companyName       TEXT,
+                    companyNameEn     TEXT,
+                    sector33Code      TEXT,
+                    sector33CodeName  TEXT,
+                    sector17Code      TEXT,
+                    sector17CodeName  TEXT,
+                    marketCode        TEXT,
+                    marketCodeName    TEXT,
+                    scaleCategory     TEXT,
+                    updatedAt         TEXT
+                )
+            """);
+
+            // J-Quants: 日次株価
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS jquants_daily_prices (
+                    code              TEXT NOT NULL,
+                    date              TEXT NOT NULL,
+                    open              REAL,
+                    high              REAL,
+                    low               REAL,
+                    close             REAL,
+                    volume            REAL,
+                    adjustmentClose   REAL,
+                    adjustmentVolume  REAL,
+                    PRIMARY KEY (code, date)
+                )
+            """);
+
+            // J-Quants: 財務情報
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS jquants_fin_statements (
+                    localCode         TEXT NOT NULL,
+                    disclosedDate     TEXT NOT NULL,
+                    typeOfDocument    TEXT NOT NULL,
+                    fiscalYear        INTEGER,
+                    netSales          REAL,
+                    operatingProfit   REAL,
+                    ordinaryProfit    REAL,
+                    profit            REAL,
+                    totalAssets       REAL,
+                    equity            REAL,
+                    PRIMARY KEY (localCode, disclosedDate, typeOfDocument)
+                )
+            """);
+
+            // J-Quants: EDINETコード ↔ 銘柄コード マッピング
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS edinet_jquants_mapping (
+                    edinetCode    TEXT PRIMARY KEY,
+                    jquantsCode   TEXT NOT NULL
+                )
+            """);
+
+            // companies テーブルへの secCode カラム追加（既存DBへのマイグレーション）
+            // カラムが既に存在する場合はエラーを無視する
+            try {
+                stmt.execute("ALTER TABLE companies ADD COLUMN secCode TEXT");
+            } catch (SQLException e) {
+                // "duplicate column name" は既にカラムが存在するため無視する
+                if (!e.getMessage().contains("duplicate column name")) {
+                    throw e;
+                }
+            }
         }
     }
 }

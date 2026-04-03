@@ -43,6 +43,19 @@ class DatabaseManagerTest {
         assertTrue(tables.contains("financial_data"));
         assertTrue(tables.contains("keyword_scores"));
         assertTrue(tables.contains("task_progress"));
+        // J-Quants テーブル
+        assertTrue(tables.contains("jquants_listed_info"));
+        assertTrue(tables.contains("jquants_daily_prices"));
+        assertTrue(tables.contains("jquants_fin_statements"));
+        assertTrue(tables.contains("edinet_jquants_mapping"));
+    }
+
+    @Test
+    void companiesテーブルにsecCodeカラムが存在すること() throws SQLException {
+        try (Connection conn = dbManager.getConnection();
+             ResultSet rs = conn.getMetaData().getColumns(null, null, "companies", "secCode")) {
+            assertTrue(rs.next(), "secCode カラムが存在すること");
+        }
     }
 
     @Test
