@@ -228,7 +228,10 @@ public class CsvExporter {
             if (v == null) {
                 // NULLは空文字
             } else {
-                String s = v.toString();
+                // DoubleのtoString()はE表記になる場合があるため、BigDecimalで平記法に変換する
+                String s = (v instanceof Double)
+                    ? java.math.BigDecimal.valueOf((Double) v).toPlainString()
+                    : v.toString();
                 // カンマ・改行・ダブルクォートを含む場合はクォートで囲む
                 if (s.contains(",") || s.contains("\n") || s.contains("\"")) {
                     sb.append('"').append(s.replace("\"", "\"\"")).append('"');
