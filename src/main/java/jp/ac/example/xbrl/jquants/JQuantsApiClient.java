@@ -8,29 +8,38 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * J-Quants API へのHTTPリクエストを担うクラス。
+ * J-Quants API v2 へのHTTPリクエストを担うクラス。
+ *
+ * 認証方式: x-api-key ヘッダー（V2以降。トークン取得は不要）
  *
  * 対応エンドポイント:
- *   - GET /v1/listed/info        — 上場銘柄情報
- *   - GET /v1/prices/daily_quotes — 日次株価
- *   - GET /v1/fins/statements    — 財務情報
+ *   - GET /v2/equities/master      — 上場銘柄情報
+ *   - GET /v2/equities/bars/daily  — 日次株価
+ *   - GET /v2/fins/summary         — 財務サマリー
  */
 public class JQuantsApiClient {
 
-    private static final String BASE_URL = "https://api.jquants.com/v1";
+    private static final String BASE_URL = "https://api.jquants.com/v2";
     private static final int MAX_RETRY = 3;
     private static final long RETRY_INTERVAL_MS = 1000L;
 
-    private final JQuantsTokenManager tokenManager;
+    private final String apiKey;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public JQuantsApiClient(JQuantsTokenManager tokenManager) {
-        this.tokenManager = tokenManager;
+    public JQuantsApiClient(String apiKey) {
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalArgumentException(
+                "JQUANTS_API_KEY が設定されていません。" +
+                "J-Quants のダッシュボードから API キーを取得して環境変数に設定してください。"
+            );
+        }
+        this.apiKey = apiKey;
         this.httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(30))
             .followRedirects(HttpClient.Redirect.ALWAYS)
@@ -57,28 +66,43 @@ public class JQuantsApiClient {
 
     /**
      * 全上場銘柄情報を取得する。
+     * V2: GET /v2/equities/master?date=YYYY-MM-DD
+     * レスポンスキー: "data"
+     * フィールド名: Code, CoName, CoNameEn, S33, S33Nm, S17, S17Nm, Mkt, MktNm, ScaleCat
      */
     public List<ListedInfoRecord> fetchListedInfo() throws Exception {
-        String json = getWithRetry(BASE_URL + "/listed/info");
-        JsonNode root = objectMapper.readTree(json);
-        JsonNode infoArray = root.get("info");
+        String today = LocalDate.now().toString(); // YYYY-MM-DD
         List<ListedInfoRecord> results = new ArrayList<>();
-        if (infoArray != null && infoArray.isArray()) {
-            for (JsonNode node : infoArray) {
-                results.add(new ListedInfoRecord(
-                    textOrNull(node, "Code"),
-                    textOrNull(node, "CompanyName"),
-                    textOrNull(node, "CompanyNameEnglish"),
-                    textOrNull(node, "Sector33Code"),
-                    textOrNull(node, "Sector33CodeName"),
-                    textOrNull(node, "Sector17Code"),
-                    textOrNull(node, "Sector17CodeName"),
-                    textOrNull(node, "MarketCode"),
-                    textOrNull(node, "MarketCodeName"),
-                    textOrNull(node, "ScaleCategory")
-                ));
+        String paginationKey = null;
+
+        do {
+            String url = BASE_URL + "/equities/master?date=" + today;
+            if (paginationKey != null) {
+                url += "&pagination_key=" + paginationKey;
             }
-        }
+            String json = getWithRetry(url);
+            JsonNode root = objectMapper.readTree(json);
+            JsonNode dataArray = root.get("data");
+            if (dataArray != null && dataArray.isArray()) {
+                for (JsonNode node : dataArray) {
+                    results.add(new ListedInfoRecord(
+                        textOrNull(node, "Code"),
+                        textOrNull(node, "CoName"),
+                        textOrNull(node, "CoNameEn"),
+                        textOrNull(node, "S33"),
+                        textOrNull(node, "S33Nm"),
+                        textOrNull(node, "S17"),
+                        textOrNull(node, "S17Nm"),
+                        textOrNull(node, "Mkt"),
+                        textOrNull(node, "MktNm"),
+                        textOrNull(node, "ScaleCat")
+                    ));
+                }
+            }
+            JsonNode pkNode = root.get("pagination_key");
+            paginationKey = (pkNode != null && !pkNode.isNull()) ? pkNode.asText() : null;
+        } while (paginationKey != null && !paginationKey.isBlank());
+
         return results;
     }
 
@@ -100,32 +124,45 @@ public class JQuantsApiClient {
 
     /**
      * 指定銘柄・期間の日次株価を取得する。
+     * V2: GET /v2/equities/bars/daily?code=xxx&from=xxx&to=xxx
+     * レスポンスキー: "data"
+     * フィールド名: Code, Date, O, H, L, C, Vo, AdjC, AdjVo
      *
      * @param code J-Quants銘柄コード（例: "72030"）
      * @param from 開始日（YYYY-MM-DD）
      * @param to   終了日（YYYY-MM-DD）
      */
     public List<DailyQuoteRecord> fetchDailyQuotes(String code, String from, String to) throws Exception {
-        String url = BASE_URL + "/prices/daily_quotes?code=" + code + "&from=" + from + "&to=" + to;
-        String json = getWithRetry(url);
-        JsonNode root = objectMapper.readTree(json);
-        JsonNode quotesArray = root.get("daily_quotes");
         List<DailyQuoteRecord> results = new ArrayList<>();
-        if (quotesArray != null && quotesArray.isArray()) {
-            for (JsonNode node : quotesArray) {
-                results.add(new DailyQuoteRecord(
-                    textOrNull(node, "Code"),
-                    textOrNull(node, "Date"),
-                    doubleOrNull(node, "Open"),
-                    doubleOrNull(node, "High"),
-                    doubleOrNull(node, "Low"),
-                    doubleOrNull(node, "Close"),
-                    doubleOrNull(node, "Volume"),
-                    doubleOrNull(node, "AdjustmentClose"),
-                    doubleOrNull(node, "AdjustmentVolume")
-                ));
+        String paginationKey = null;
+
+        do {
+            String url = BASE_URL + "/equities/bars/daily?code=" + code + "&from=" + from + "&to=" + to;
+            if (paginationKey != null) {
+                url += "&pagination_key=" + paginationKey;
             }
-        }
+            String json = getWithRetry(url);
+            JsonNode root = objectMapper.readTree(json);
+            JsonNode dataArray = root.get("data");
+            if (dataArray != null && dataArray.isArray()) {
+                for (JsonNode node : dataArray) {
+                    results.add(new DailyQuoteRecord(
+                        textOrNull(node, "Code"),
+                        textOrNull(node, "Date"),
+                        doubleOrNull(node, "O"),
+                        doubleOrNull(node, "H"),
+                        doubleOrNull(node, "L"),
+                        doubleOrNull(node, "C"),
+                        doubleOrNull(node, "Vo"),
+                        doubleOrNull(node, "AdjC"),
+                        doubleOrNull(node, "AdjVo")
+                    ));
+                }
+            }
+            JsonNode pkNode = root.get("pagination_key");
+            paginationKey = (pkNode != null && !pkNode.isNull()) ? pkNode.asText() : null;
+        } while (paginationKey != null && !paginationKey.isBlank());
+
         return results;
     }
 
@@ -148,31 +185,47 @@ public class JQuantsApiClient {
 
     /**
      * 指定銘柄の通期財務情報を取得する。
+     * V2: GET /v2/fins/summary?code=xxx
+     * レスポンスキー: "data"
+     * フィールド名: Code, DiscDate, DocType, CurFYEn, Sales, OP, NP, TA, Eq
+     * fiscalYear は CurFYEn（通期終了日）から導出: 月≤3なら year-1、それ以外は year
      *
      * @param code J-Quants銘柄コード
      */
     public List<FinStatementRecord> fetchFinStatements(String code) throws Exception {
-        String url = BASE_URL + "/fins/statements?code=" + code;
-        String json = getWithRetry(url);
-        JsonNode root = objectMapper.readTree(json);
-        JsonNode statementsArray = root.get("statements");
         List<FinStatementRecord> results = new ArrayList<>();
-        if (statementsArray != null && statementsArray.isArray()) {
-            for (JsonNode node : statementsArray) {
-                results.add(new FinStatementRecord(
-                    textOrNull(node, "LocalCode"),
-                    textOrNull(node, "DisclosedDate"),
-                    textOrNull(node, "TypeOfDocument"),
-                    intOrNull(node, "FiscalYear"),
-                    doubleFromStringOrNull(node, "NetSales"),
-                    doubleFromStringOrNull(node, "OperatingProfit"),
-                    doubleFromStringOrNull(node, "OrdinaryProfit"),
-                    doubleFromStringOrNull(node, "Profit"),
-                    doubleFromStringOrNull(node, "TotalAssets"),
-                    doubleFromStringOrNull(node, "Equity")
-                ));
+        String paginationKey = null;
+
+        do {
+            String url = BASE_URL + "/fins/summary?code=" + code;
+            if (paginationKey != null) {
+                url += "&pagination_key=" + paginationKey;
             }
-        }
+            String json = getWithRetry(url);
+            JsonNode root = objectMapper.readTree(json);
+            JsonNode dataArray = root.get("data");
+            if (dataArray != null && dataArray.isArray()) {
+                for (JsonNode node : dataArray) {
+                    String fyEnd = textOrNull(node, "CurFYEn");
+                    Integer fiscalYear = deriveFiscalYear(fyEnd);
+                    results.add(new FinStatementRecord(
+                        textOrNull(node, "Code"),
+                        textOrNull(node, "DiscDate"),
+                        textOrNull(node, "DocType"),
+                        fiscalYear,
+                        doubleFromStringOrNull(node, "Sales"),
+                        doubleFromStringOrNull(node, "OP"),
+                        null, // 経常利益は fins/summary に含まれない
+                        doubleFromStringOrNull(node, "NP"),
+                        doubleFromStringOrNull(node, "TA"),
+                        doubleFromStringOrNull(node, "Eq")
+                    ));
+                }
+            }
+            JsonNode pkNode = root.get("pagination_key");
+            paginationKey = (pkNode != null && !pkNode.isNull()) ? pkNode.asText() : null;
+        } while (paginationKey != null && !paginationKey.isBlank());
+
         return results;
     }
 
@@ -180,14 +233,29 @@ public class JQuantsApiClient {
     // 内部ユーティリティ
     // -------------------------------------------------------------------------
 
+    /**
+     * 通期終了日（CurFYEn）から年度を導出する。
+     * 例: "2023-03-31" → 2022（3月以前終了は前年度）
+     *     "2022-12-31" → 2022（4月以降終了は同年度）
+     */
+    private Integer deriveFiscalYear(String fyEnd) {
+        if (fyEnd == null || fyEnd.length() < 7) return null;
+        try {
+            int year = Integer.parseInt(fyEnd.substring(0, 4));
+            int month = Integer.parseInt(fyEnd.substring(5, 7));
+            return month <= 3 ? year - 1 : year;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     private String getWithRetry(String url) throws Exception {
-        String idToken = tokenManager.getIdToken();
         Exception lastException = null;
         for (int attempt = 0; attempt < MAX_RETRY; attempt++) {
             try {
                 HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .header("Authorization", "Bearer " + idToken)
+                    .header("x-api-key", apiKey)
                     .GET()
                     .timeout(Duration.ofSeconds(60))
                     .build();
@@ -198,7 +266,10 @@ public class JQuantsApiClient {
                 if (response.statusCode() == 429) {
                     Thread.sleep(RETRY_INTERVAL_MS * 5);
                 } else {
-                    throw new RuntimeException("J-Quants API エラー: ステータスコード=" + response.statusCode() + " URL=" + url);
+                    throw new RuntimeException(
+                        "J-Quants API エラー: ステータスコード=" + response.statusCode()
+                        + " レスポンス=" + response.body() + " URL=" + url
+                    );
                 }
             } catch (RuntimeException e) {
                 throw e;
@@ -230,10 +301,5 @@ public class JQuantsApiClient {
         } catch (NumberFormatException e) {
             return null;
         }
-    }
-
-    private Integer intOrNull(JsonNode node, String field) {
-        JsonNode n = node.get(field);
-        return (n == null || n.isNull()) ? null : n.asInt();
     }
 }

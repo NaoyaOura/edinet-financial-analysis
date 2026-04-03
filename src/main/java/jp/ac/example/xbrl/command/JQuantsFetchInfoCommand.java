@@ -6,7 +6,6 @@ import jp.ac.example.xbrl.db.DatabaseManager;
 import jp.ac.example.xbrl.db.EdinetJQuantsMappingDao;
 import jp.ac.example.xbrl.db.JQuantsListedInfoDao;
 import jp.ac.example.xbrl.jquants.JQuantsApiClient;
-import jp.ac.example.xbrl.jquants.JQuantsTokenManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,16 +31,15 @@ public class JQuantsFetchInfoCommand {
     }
 
     public void execute(String[] args) throws Exception {
-        String refreshToken = config.getJquantsRefreshToken();
-        if (refreshToken == null) {
+        String apiKey = config.getJquantsApiKey();
+        if (apiKey == null) {
             throw new IllegalStateException(
-                "環境変数 JQUANTS_REFRESH_TOKEN が設定されていません。" +
-                "J-Quants のダッシュボードからリフレッシュトークンを取得して設定してください。"
+                "環境変数 JQUANTS_API_KEY が設定されていません。" +
+                "J-Quants のダッシュボードから API キーを取得して設定してください。"
             );
         }
 
-        JQuantsTokenManager tokenManager = new JQuantsTokenManager(refreshToken);
-        JQuantsApiClient apiClient = new JQuantsApiClient(tokenManager);
+        JQuantsApiClient apiClient = new JQuantsApiClient(apiKey);
 
         // 1. 上場銘柄情報を取得して保存
         System.out.println("J-Quants から上場銘柄情報を取得中...");

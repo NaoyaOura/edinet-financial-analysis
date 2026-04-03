@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 /**
@@ -47,9 +49,11 @@ public class JQuantsTokenManager {
      */
     public String getIdToken() {
         try {
+            // リフレッシュトークンはクエリパラメータで渡す（Authorizationヘッダーではない）
+            // URLエンコードしてクォート等の不正文字を除去する
+            String encodedToken = URLEncoder.encode(refreshToken.trim(), StandardCharsets.UTF_8);
             HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(TOKEN_URL))
-                .header("Authorization", "Bearer " + refreshToken)
+                .uri(URI.create(TOKEN_URL + "?refreshtoken=" + encodedToken))
                 .POST(HttpRequest.BodyPublishers.noBody())
                 .timeout(Duration.ofSeconds(30))
                 .build();
@@ -59,6 +63,7 @@ public class JQuantsTokenManager {
             if (response.statusCode() != 200) {
                 throw new RuntimeException(
                     "J-Quants IDトークン取得に失敗しました。ステータスコード: " + response.statusCode()
+                    + " レスポンス: " + response.body()
                 );
             }
 

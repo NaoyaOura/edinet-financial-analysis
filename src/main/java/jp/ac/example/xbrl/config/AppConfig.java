@@ -9,7 +9,7 @@ public class AppConfig {
     private static AppConfig instance;
 
     private final String edinetApiKey;
-    private final String jquantsRefreshToken;
+    private final String jquantsApiKey;
     private final String dbPath;
     private final String rawDataDir;
     private final String outputDir;
@@ -25,9 +25,9 @@ public class AppConfig {
         }
         this.edinetApiKey = apiKey;
 
-        // 任意: J-Quants リフレッシュトークン（J-Quants系コマンド使用時のみ必須）
-        String jquantsToken = System.getenv("JQUANTS_REFRESH_TOKEN");
-        this.jquantsRefreshToken = (jquantsToken != null && !jquantsToken.isBlank()) ? jquantsToken : null;
+        // 任意: J-Quants API キー（J-Quants系コマンド使用時のみ必須）
+        String jquantsToken = System.getenv("JQUANTS_API_KEY");
+        this.jquantsApiKey = (jquantsToken != null && !jquantsToken.isBlank()) ? jquantsToken : null;
 
         // 任意: DBパス（デフォルト: ./data/xbrl.db）
         String dbPathEnv = System.getenv("DB_PATH");
@@ -63,8 +63,8 @@ public class AppConfig {
         return edinetApiKey;
     }
 
-    public String getJquantsRefreshToken() {
-        return jquantsRefreshToken;
+    public String getJquantsApiKey() {
+        return jquantsApiKey;
     }
 
     public String getDbPath() {

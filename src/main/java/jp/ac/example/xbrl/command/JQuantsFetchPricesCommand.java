@@ -5,7 +5,6 @@ import jp.ac.example.xbrl.db.DatabaseManager;
 import jp.ac.example.xbrl.db.EdinetJQuantsMappingDao;
 import jp.ac.example.xbrl.db.JQuantsDailyPricesDao;
 import jp.ac.example.xbrl.jquants.JQuantsApiClient;
-import jp.ac.example.xbrl.jquants.JQuantsTokenManager;
 
 import java.sql.Connection;
 import java.util.List;
@@ -33,17 +32,16 @@ public class JQuantsFetchPricesCommand {
             throw new IllegalArgumentException("--year オプションは必須です。例: jquants-fetch-prices --year 2023");
         }
 
-        String refreshToken = config.getJquantsRefreshToken();
-        if (refreshToken == null) {
-            throw new IllegalStateException("環境変数 JQUANTS_REFRESH_TOKEN が設定されていません。");
+        String apiKey = config.getJquantsApiKey();
+        if (apiKey == null) {
+            throw new IllegalStateException("環境変数 JQUANTS_API_KEY が設定されていません。");
         }
 
         // 年度 → 日付範囲（日本の年度: 4月始まり）
         String from = fiscalYear + "-04-01";
         String to = (fiscalYear + 1) + "-03-31";
 
-        JQuantsTokenManager tokenManager = new JQuantsTokenManager(refreshToken);
-        JQuantsApiClient apiClient = new JQuantsApiClient(tokenManager);
+        JQuantsApiClient apiClient = new JQuantsApiClient(apiKey);
 
         // 対象銘柄コード一覧を取得
         List<EdinetJQuantsMappingDao.MappingRecord> mappings;
