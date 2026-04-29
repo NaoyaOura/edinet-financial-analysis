@@ -15,12 +15,14 @@ class GroupComparatorTest {
     private List<MergedRecord> buildData(int n) {
         List<MergedRecord> records = new ArrayList<>();
         for (int i = 0; i < n; i++) {
-            double score  = i * 10.0;           // 0, 10, 20, ...
+            double score  = i * 10.0;
             double sales  = 1_000_000.0;
-            double opInc  = sales * (i * 0.01); // スコアが高いほど営業利益率も高い
+            double opInc  = sales * (i * 0.01);
             records.add(new MergedRecord(
-                "E" + String.format("%05d", i), 2023, "RETAIL",
-                sales, opInc, opInc * 0.7, sales * 2.0, sales * 1.0,
+                "E" + String.format("%05d", i), 2023,
+                "6100", "小売業",
+                sales, opInc, null, opInc * 0.7, sales * 2.0, sales * 1.0,
+                null, null, null,
                 score, score * 0.5, score * 0.3, score * 0.2, 5000
             ));
         }
@@ -54,8 +56,6 @@ class GroupComparatorTest {
     @Test
     void analyze_データ不足の場合は空リスト() {
         List<GroupComparator.ComparisonResult> results = comparator.analyze(buildData(5));
-        // 5件では3群×MIN_GROUP_SIZE=2 = 6件に満たないためスキップされる可能性あり
-        // ここでは例外が発生しないことを確認
         assertNotNull(results);
     }
 

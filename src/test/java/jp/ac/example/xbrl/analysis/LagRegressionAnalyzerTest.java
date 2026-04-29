@@ -18,16 +18,20 @@ class LagRegressionAnalyzerTest {
     private List<MergedRecord> buildLagData() {
         List<MergedRecord> records = new ArrayList<>();
         double[] noises = {0.2, -0.1, 0.3, -0.2, 0.1, 0.4, -0.3, 0.2, -0.1, 0.3};
-        String[] industries = {"RETAIL", "RETAIL", "RETAIL", "RETAIL", "RETAIL",
-                               "IT", "IT", "IT", "IT", "IT"};
+        String[] sector33Codes = {"6100", "6100", "6100", "6100", "6100",
+                                  "5250", "5250", "5250", "5250", "5250"};
+        String[] sectorNames   = {"小売業", "小売業", "小売業", "小売業", "小売業",
+                                  "情報・通信業", "情報・通信業", "情報・通信業", "情報・通信業", "情報・通信業"};
         for (int comp = 0; comp < 10; comp++) {
-            for (int year = 2021; year <= 2023; year++) {
+            for (int year = 2022; year <= 2024; year++) {
                 double score  = comp * 5.0;
-                double sales  = 1_000_000.0 * (comp + 1) * (1.0 + (year - 2021) * 0.05);
+                double sales  = 1_000_000.0 * (comp + 1) * (1.0 + (year - 2022) * 0.05);
                 double opInc  = sales * (0.05 + 0.001 * score + noises[comp % noises.length] * 0.01);
                 records.add(new MergedRecord(
-                    "E" + String.format("%05d", comp), year, industries[comp],
-                    sales, opInc, opInc * 0.7, sales * 2.0, sales,
+                    "E" + String.format("%05d", comp), year,
+                    sector33Codes[comp], sectorNames[comp],
+                    sales, opInc, null, opInc * 0.7, sales * 2.0, sales,
+                    null, null, null,
                     score, score * 0.5, score * 0.3, score * 0.2, 5000
                 ));
             }
@@ -52,7 +56,6 @@ class LagRegressionAnalyzerTest {
     @Test
     void analyze_係数とp値が出力される() {
         String report = analyzer.analyze(buildLagData());
-        // 回帰係数と p値の列が出力されること
         assertTrue(report.contains("定数項"), "定数項が含まれること");
         assertTrue(report.contains("log(売上高)"), "log(売上高)が含まれること");
     }

@@ -12,17 +12,14 @@ import java.util.function.Function;
 /**
  * キーワードスコアの四分位グループ（Q1・中間・Q4）間で財務指標を比較するクラス。
  *
- * 高・中・低スコア群の営業利益率・ROA の平均値を比較し、
+ * 高・中・低スコア群の各財務指標平均値を比較し、
  * Q1 vs Q4 の t検定と3群 ANOVA により有意差を検定する。
+ * 比較する指標: 営業利益率、ROA、ROE、純利益率、自己資本比率
  */
 public class GroupComparator {
 
-    /** 最低サンプル数（これ未満の場合はスキップ） */
     private static final int MIN_GROUP_SIZE = 2;
 
-    /**
-     * 各グループの統計量を保持するレコード。
-     */
     public record GroupStats(String label, int n, double mean, double std) {
         @Override
         public String toString() {
@@ -30,9 +27,6 @@ public class GroupComparator {
         }
     }
 
-    /**
-     * 1指標の比較結果を保持するレコード。
-     */
     public record ComparisonResult(
         String metricName,
         GroupStats q1,
@@ -55,7 +49,6 @@ public class GroupComparator {
             return List.of();
         }
 
-        // totalScore の四分位を計算
         double[] scores = records.stream().mapToDouble(MergedRecord::totalScore).toArray();
         DescriptiveStatistics ds = new DescriptiveStatistics(scores);
         double q25 = ds.getPercentile(25);
@@ -67,7 +60,10 @@ public class GroupComparator {
 
         return List.of(
             compare("営業利益率 (%)", q1Group, midGroup, q4Group, MergedRecord::operatingMargin),
-            compare("ROA (%)",       q1Group, midGroup, q4Group, MergedRecord::roa)
+            compare("ROA (%)",       q1Group, midGroup, q4Group, MergedRecord::roa),
+            compare("ROE (%)",       q1Group, midGroup, q4Group, MergedRecord::roe),
+            compare("純利益率 (%)",  q1Group, midGroup, q4Group, MergedRecord::netProfitMargin),
+            compare("自己資本比率(%)", q1Group, midGroup, q4Group, MergedRecord::equityRatio)
         ).stream().filter(Objects::nonNull).toList();
     }
 
@@ -96,7 +92,7 @@ public class GroupComparator {
                 fStat  = anova.anovaFValue(Arrays.asList(q1, mid, q4));
                 pAnova = anova.anovaPValue(Arrays.asList(q1, mid, q4));
             } catch (Exception e) {
-                // データ不足などでANOVA計算不能の場合はスキップ
+                // データ不足などでANOVA計算不能
             }
         }
 
@@ -140,7 +136,8 @@ public class GroupComparator {
 
         double[] scores = records.stream().mapToDouble(MergedRecord::totalScore).toArray();
         DescriptiveStatistics ds = new DescriptiveStatistics(scores);
-        sb.append(String.format("totalScore 四分位: Q25=%.4f  Q75=%.4f%n%n", ds.getPercentile(25), ds.getPercentile(75)));
+        sb.append(String.format("totalScore 四分位: Q25=%.4f  Q75=%.4f%n%n",
+            ds.getPercentile(25), ds.getPercentile(75)));
 
         for (ComparisonResult r : results) {
             sb.append("【").append(r.metricName()).append("】\n");
@@ -160,9 +157,9 @@ public class GroupComparator {
     }
 
     private static String significance(double p) {
-        if (p < 0.01)  return " ***";
-        if (p < 0.05)  return " **";
-        if (p < 0.10)  return " *";
+        if (p < 0.01) return " ***";
+        if (p < 0.05) return "  **";
+        if (p < 0.10) return "   *";
         return "";
     }
 }

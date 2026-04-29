@@ -69,7 +69,9 @@ public class JQuantsFetchFinsCommand {
                             dao.upsert(new JQuantsFinStatementsDao.FinStatementRecord(
                                 s.localCode(), s.disclosedDate(), s.typeOfDocument(), s.fiscalYear(),
                                 s.netSales(), s.operatingProfit(), s.ordinaryProfit(),
-                                s.profit(), s.totalAssets(), s.equity()
+                                s.profit(), s.totalAssets(), s.equity(),
+                                s.cashFlowsFromOperating(), s.cashFlowsFromInvesting(),
+                                s.cashFlowsFromFinancing(), s.cashAndEquivalents()
                             ));
                         }
                     }

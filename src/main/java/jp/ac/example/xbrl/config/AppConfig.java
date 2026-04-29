@@ -15,13 +15,12 @@ public class AppConfig {
     private final String outputDir;
 
     private AppConfig() {
-        // 必須: APIキー
+        // 任意: EDINET APIキー（EDINET系コマンド使用時のみ必須）
         String apiKey = System.getenv("EDINET_API_KEY");
         if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalStateException(
-                "環境変数 EDINET_API_KEY が設定されていません。" +
-                "実行前に export EDINET_API_KEY=your_api_key を設定してください。"
-            );
+            System.err.println("[WARN] 環境変数 EDINET_API_KEY が設定されていません。" +
+                "EDINET系コマンド（fetch-list, download, parse-xbrl 等）を使用する場合は設定してください。");
+            apiKey = null;
         }
         this.edinetApiKey = apiKey;
 

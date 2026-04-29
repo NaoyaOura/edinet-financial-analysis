@@ -22,19 +22,23 @@ class DifferenceInDifferencesTest {
         // 処理群 (5社): スコア 10 → 20（100%増）、業績改善
         for (int i = 1; i <= 5; i++) {
             double sales = 1_000_000.0;
-            records.add(new MergedRecord("E" + String.format("%05d", i), 2022, "RETAIL",
-                sales, sales * 0.05, null, null, null, 10.0, 5.0, 3.0, 2.0, 5000));
-            records.add(new MergedRecord("E" + String.format("%05d", i), 2023, "RETAIL",
-                sales, sales * 0.08, null, null, null, 20.0, 10.0, 6.0, 4.0, 5000));
+            records.add(new MergedRecord("E" + String.format("%05d", i), 2022,
+                "6100", "小売業", sales, sales * 0.05, null, null, null, null,
+                null, null, null, 10.0, 5.0, 3.0, 2.0, 5000));
+            records.add(new MergedRecord("E" + String.format("%05d", i), 2023,
+                "6100", "小売業", sales, sales * 0.08, null, null, null, null,
+                null, null, null, 20.0, 10.0, 6.0, 4.0, 5000));
         }
 
         // 対照群 (10社): スコア 10 → 11（変化少）、業績変化なし
         for (int i = 6; i <= 15; i++) {
             double sales = 1_000_000.0;
-            records.add(new MergedRecord("E" + String.format("%05d", i), 2022, "RETAIL",
-                sales, sales * 0.05, null, null, null, 10.0, 5.0, 3.0, 2.0, 5000));
-            records.add(new MergedRecord("E" + String.format("%05d", i), 2023, "RETAIL",
-                sales, sales * 0.05, null, null, null, 11.0, 5.5, 3.3, 2.2, 5000));
+            records.add(new MergedRecord("E" + String.format("%05d", i), 2022,
+                "6100", "小売業", sales, sales * 0.05, null, null, null, null,
+                null, null, null, 10.0, 5.0, 3.0, 2.0, 5000));
+            records.add(new MergedRecord("E" + String.format("%05d", i), 2023,
+                "6100", "小売業", sales, sales * 0.05, null, null, null, null,
+                null, null, null, 11.0, 5.5, 3.3, 2.2, 5000));
         }
 
         return records;
@@ -66,10 +70,12 @@ class DifferenceInDifferencesTest {
     void analyze_データ不足でスキップメッセージが返る() {
         // 処理群・対照群のどちらかが MIN_GROUP_SIZE 未満
         List<MergedRecord> sparse = new ArrayList<>();
-        sparse.add(new MergedRecord("E00001", 2022, "RETAIL",
-            1_000_000.0, 50_000.0, null, null, null, 10.0, 5.0, 3.0, 2.0, 5000));
-        sparse.add(new MergedRecord("E00001", 2023, "RETAIL",
-            1_000_000.0, 80_000.0, null, null, null, 20.0, 10.0, 6.0, 4.0, 5000));
+        sparse.add(new MergedRecord("E00001", 2022, "6100", "小売業",
+            1_000_000.0, 50_000.0, null, null, null, null,
+            null, null, null, 10.0, 5.0, 3.0, 2.0, 5000));
+        sparse.add(new MergedRecord("E00001", 2023, "6100", "小売業",
+            1_000_000.0, 80_000.0, null, null, null, null,
+            null, null, null, 20.0, 10.0, 6.0, 4.0, 5000));
 
         String report = did.analyze(sparse, 2022, 2023);
         assertTrue(report.contains("データが不足"), "データ不足メッセージが出ること");

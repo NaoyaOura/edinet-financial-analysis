@@ -22,7 +22,11 @@ public class JQuantsFinStatementsDao {
         Double ordinaryProfit,
         Double profit,
         Double totalAssets,
-        Double equity
+        Double equity,
+        Double cashFlowsFromOperating,
+        Double cashFlowsFromInvesting,
+        Double cashFlowsFromFinancing,
+        Double cashAndEquivalents
     ) {}
 
     private final Connection conn;
@@ -38,16 +42,22 @@ public class JQuantsFinStatementsDao {
         String sql = """
             INSERT INTO jquants_fin_statements (
                 localCode, disclosedDate, typeOfDocument, fiscalYear,
-                netSales, operatingProfit, ordinaryProfit, profit, totalAssets, equity
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                netSales, operatingProfit, ordinaryProfit, profit, totalAssets, equity,
+                cashFlowsFromOperating, cashFlowsFromInvesting,
+                cashFlowsFromFinancing, cashAndEquivalents
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(localCode, disclosedDate, typeOfDocument) DO UPDATE SET
-                fiscalYear      = excluded.fiscalYear,
-                netSales        = excluded.netSales,
-                operatingProfit = excluded.operatingProfit,
-                ordinaryProfit  = excluded.ordinaryProfit,
-                profit          = excluded.profit,
-                totalAssets     = excluded.totalAssets,
-                equity          = excluded.equity
+                fiscalYear              = excluded.fiscalYear,
+                netSales                = excluded.netSales,
+                operatingProfit         = excluded.operatingProfit,
+                ordinaryProfit          = excluded.ordinaryProfit,
+                profit                  = excluded.profit,
+                totalAssets             = excluded.totalAssets,
+                equity                  = excluded.equity,
+                cashFlowsFromOperating  = excluded.cashFlowsFromOperating,
+                cashFlowsFromInvesting  = excluded.cashFlowsFromInvesting,
+                cashFlowsFromFinancing  = excluded.cashFlowsFromFinancing,
+                cashAndEquivalents      = excluded.cashAndEquivalents
             """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, r.localCode());
@@ -60,6 +70,10 @@ public class JQuantsFinStatementsDao {
             setDoubleOrNull(ps, 8, r.profit());
             setDoubleOrNull(ps, 9, r.totalAssets());
             setDoubleOrNull(ps, 10, r.equity());
+            setDoubleOrNull(ps, 11, r.cashFlowsFromOperating());
+            setDoubleOrNull(ps, 12, r.cashFlowsFromInvesting());
+            setDoubleOrNull(ps, 13, r.cashFlowsFromFinancing());
+            setDoubleOrNull(ps, 14, r.cashAndEquivalents());
             ps.executeUpdate();
         }
     }
@@ -79,22 +93,30 @@ public class JQuantsFinStatementsDao {
             ps.setInt(2, fiscalYear);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    results.add(new FinStatementRecord(
-                        rs.getString("localCode"),
-                        rs.getString("disclosedDate"),
-                        rs.getString("typeOfDocument"),
-                        (Integer) rs.getObject("fiscalYear"),
-                        (Double) rs.getObject("netSales"),
-                        (Double) rs.getObject("operatingProfit"),
-                        (Double) rs.getObject("ordinaryProfit"),
-                        (Double) rs.getObject("profit"),
-                        (Double) rs.getObject("totalAssets"),
-                        (Double) rs.getObject("equity")
-                    ));
+                    results.add(map(rs));
                 }
             }
         }
         return results;
+    }
+
+    private FinStatementRecord map(ResultSet rs) throws SQLException {
+        return new FinStatementRecord(
+            rs.getString("localCode"),
+            rs.getString("disclosedDate"),
+            rs.getString("typeOfDocument"),
+            (Integer) rs.getObject("fiscalYear"),
+            (Double) rs.getObject("netSales"),
+            (Double) rs.getObject("operatingProfit"),
+            (Double) rs.getObject("ordinaryProfit"),
+            (Double) rs.getObject("profit"),
+            (Double) rs.getObject("totalAssets"),
+            (Double) rs.getObject("equity"),
+            (Double) rs.getObject("cashFlowsFromOperating"),
+            (Double) rs.getObject("cashFlowsFromInvesting"),
+            (Double) rs.getObject("cashFlowsFromFinancing"),
+            (Double) rs.getObject("cashAndEquivalents")
+        );
     }
 
     private void setDoubleOrNull(PreparedStatement ps, int index, Double value) throws SQLException {

@@ -180,7 +180,11 @@ public class JQuantsApiClient {
         Double ordinaryProfit,
         Double profit,
         Double totalAssets,
-        Double equity
+        Double equity,
+        Double cashFlowsFromOperating,
+        Double cashFlowsFromInvesting,
+        Double cashFlowsFromFinancing,
+        Double cashAndEquivalents
     ) {}
 
     /**
@@ -218,7 +222,11 @@ public class JQuantsApiClient {
                         null, // 経常利益は fins/summary に含まれない
                         doubleFromStringOrNull(node, "NP"),
                         doubleFromStringOrNull(node, "TA"),
-                        doubleFromStringOrNull(node, "Eq")
+                        doubleFromStringOrNull(node, "Eq"),
+                        null, // CF項目は fins/summary に含まれない
+                        null,
+                        null,
+                        null
                     ));
                 }
             }

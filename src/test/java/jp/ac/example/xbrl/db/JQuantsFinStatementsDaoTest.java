@@ -29,11 +29,11 @@ class JQuantsFinStatementsDaoTest {
     }
 
     private JQuantsFinStatementsDao.FinStatementRecord sampleRecord(String code, int fiscalYear) {
-        // disclosedDate は年度ごとに異なる（例: 2023年度 → "2023-05-11"、2022年度 → "2022-05-11"）
         String disclosedDate = fiscalYear + "-05-11";
         return new JQuantsFinStatementsDao.FinStatementRecord(
             code, disclosedDate, "FY", fiscalYear,
-            1000000.0, 80000.0, 85000.0, 60000.0, 5000000.0, 2000000.0
+            1000000.0, 80000.0, 85000.0, 60000.0, 5000000.0, 2000000.0,
+            null, null, null, null
         );
     }
 
@@ -59,7 +59,8 @@ class JQuantsFinStatementsDaoTest {
             dao.upsert(sampleRecord("72030", 2023));
             dao.upsert(new JQuantsFinStatementsDao.FinStatementRecord(
                 "72030", "2023-05-11", "FY", 2023,
-                2000000.0, null, null, null, null, null
+                2000000.0, null, null, null, null, null,
+                null, null, null, null
             ));
 
             List<JQuantsFinStatementsDao.FinStatementRecord> results =

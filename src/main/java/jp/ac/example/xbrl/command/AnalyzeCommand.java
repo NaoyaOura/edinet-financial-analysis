@@ -5,6 +5,7 @@ import jp.ac.example.xbrl.analysis.DifferenceInDifferences;
 import jp.ac.example.xbrl.analysis.GroupComparator;
 import jp.ac.example.xbrl.analysis.LagRegressionAnalyzer;
 import jp.ac.example.xbrl.analysis.MergedRecord;
+import jp.ac.example.xbrl.analysis.MultiModelAnalyzer;
 import jp.ac.example.xbrl.analysis.PanelDataAnalyzer;
 import jp.ac.example.xbrl.config.AppConfig;
 import jp.ac.example.xbrl.db.DatabaseManager;
@@ -45,9 +46,10 @@ public class AnalyzeCommand {
         List<MergedRecord> records;
         try (Connection conn = dbManager.getConnection()) {
             AnalysisDataLoader loader = new AnalysisDataLoader(conn);
-            // lag-regression と panel は全年度のデータが必要
+            // lag-regression / panel / explore / all は全年度のデータが必要
             boolean needAllYears = type.equals("lag-regression")
                 || type.equals("panel")
+                || type.equals("explore")
                 || type.equals("all");
             records = loader.load(needAllYears ? 0 : fiscalYear);
         } catch (Exception e) {
@@ -58,7 +60,10 @@ public class AnalyzeCommand {
         System.out.printf("読み込みレコード数: %d件%n", records.size());
 
         if (records.isEmpty()) {
-            System.out.println("分析対象データがありません（parse-xbrl と score-keywords が完了しているか確認してください）。");
+            System.out.println("分析対象データがありません。");
+            System.out.println("以下のいずれかを確認してください:");
+            System.out.println("  [財務データ] jquants-fetch-info → jquants-fetch-fins --year 2022/2023/2024/2025");
+            System.out.println("  [テキストデータ] parse-xbrl → score-keywords が完了しているか確認");
             return;
         }
 
@@ -81,6 +86,8 @@ public class AnalyzeCommand {
                         DifferenceInDifferences.DEFAULT_TREAT_YEAR));
                 case "panel" ->
                     sections.add(new PanelDataAnalyzer().analyze(records));
+                case "explore" ->
+                    sections.add(new MultiModelAnalyzer().analyze(records));
                 case "all" -> {
                     sections.add(new GroupComparator().formatReport(filteredRecords));
                     sections.add(new LagRegressionAnalyzer().analyze(records));
@@ -88,10 +95,11 @@ public class AnalyzeCommand {
                         records, DifferenceInDifferences.DEFAULT_BASE_YEAR,
                         DifferenceInDifferences.DEFAULT_TREAT_YEAR));
                     sections.add(new PanelDataAnalyzer().analyze(records));
+                    sections.add(new MultiModelAnalyzer().analyze(records));
                 }
                 default -> {
                     System.err.println("不明な --type: " + type +
-                        "（group-comparison / lag-regression / did / panel / all のいずれかを指定してください）");
+                        "（group-comparison / lag-regression / did / panel / explore / all のいずれかを指定してください）");
                     return;
                 }
             }

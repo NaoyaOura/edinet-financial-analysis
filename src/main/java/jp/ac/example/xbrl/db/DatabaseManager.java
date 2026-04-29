@@ -183,9 +183,24 @@ public class DatabaseManager {
             try {
                 stmt.execute("ALTER TABLE companies ADD COLUMN secCode TEXT");
             } catch (SQLException e) {
-                // "duplicate column name" は既にカラムが存在するため無視する
                 if (!e.getMessage().contains("duplicate column name")) {
                     throw e;
+                }
+            }
+
+            // jquants_fin_statements テーブルへの CF列追加（マイグレーション）
+            for (String column : new String[]{
+                    "ALTER TABLE jquants_fin_statements ADD COLUMN cashFlowsFromOperating REAL",
+                    "ALTER TABLE jquants_fin_statements ADD COLUMN cashFlowsFromInvesting REAL",
+                    "ALTER TABLE jquants_fin_statements ADD COLUMN cashFlowsFromFinancing REAL",
+                    "ALTER TABLE jquants_fin_statements ADD COLUMN cashAndEquivalents REAL"
+            }) {
+                try {
+                    stmt.execute(column);
+                } catch (SQLException e) {
+                    if (!e.getMessage().contains("duplicate column name")) {
+                        throw e;
+                    }
                 }
             }
         }

@@ -80,6 +80,10 @@ public class DifferenceInDifferences {
             MergedRecord::operatingMargin);
         appendDidResult(sb, "ROA (%)",       treatment, control, baseData, treatData,
             MergedRecord::roa);
+        appendDidResult(sb, "ROE (%)",       treatment, control, baseData, treatData,
+            MergedRecord::roe);
+        appendDidResult(sb, "純利益率 (%)",  treatment, control, baseData, treatData,
+            MergedRecord::netProfitMargin);
 
         return sb.toString();
     }

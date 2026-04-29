@@ -14,14 +14,15 @@ class AppConfigTest {
     }
 
     @Test
-    void EDINET_API_KEYが設定されていない場合は例外をスロー() {
-        // CI環境等でAPIキーが設定されていないことを前提とするテスト
+    void EDINET_API_KEYが設定されていない場合は警告のみでインスタンス生成できる() {
+        // APIキー未設定でも analyze 等のコマンドが動作できるよう例外を投げない
         String apiKey = System.getenv("EDINET_API_KEY");
         if (apiKey != null && !apiKey.isBlank()) {
             // すでに設定されている場合はスキップ
             return;
         }
-        assertThrows(IllegalStateException.class, AppConfig::getInstance);
+        assertDoesNotThrow(AppConfig::getInstance);
+        assertNull(AppConfig.getInstance().getEdinetApiKey());
     }
 
     @Test
